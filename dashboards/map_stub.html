@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mapa Fincas</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style> html,body,#map{height:100%; margin:0;} .popup{font:14px/1.4 sans-serif;} </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([13.7, -88.9], 8);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom:19 }).addTo(map);
+    fetch('../export/fincas.geojson').then(r=>r.json()).then(gj=>{
+      const layer = L.geoJSON(gj, {
+        onEachFeature: (feat, layer) => {
+          const p = feat.properties || {};
+          const rows = [
+            ['Municipio', p.Municipio],
+            ['Altitud', p.altitud],
+            ['Árboles x mz', p['Arboles x mz']],
+            ['Obs. plagas', p.Observaciones_sobre_plagas],
+            ['Obs. control', p.Observaciones_control_plagas],
+            ['Obs. finales', p.Observaciones_Finales],
+            ['Fecha diag.', p.Fecha_Realizacion_del_Diagnostico],
+          ].filter(r => r[1] !== undefined && r[1] !== null);
+          const html = '<div class="popup">' + rows.map(r=>`<div><b>${r[0]}:</b> ${r[1]}</div>`).join('') + '</div>';
+          layer.bindPopup(html);
+        }
+      }).addTo(map);
+      try { map.fitBounds(layer.getBounds()); } catch(e) {}
+    });
+  </script>
+</body>
+</html>
